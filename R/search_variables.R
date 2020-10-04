@@ -15,6 +15,14 @@
 #' @export
 load_variables <- function(year, dataset, cache = FALSE) {
 
+  if (dataset == "sf3" && year == 2000) {
+    stop("The 2000 SF3 endpoint has been removed by the Census Bureau. We will support this data again when the endpoint is updated; in the meantime, we recommend using NHGIS (https://nhgis.org) and the ipumsr R package.")
+  }
+
+  if (year == 1990) {
+    stop("The 1990 decennial Census endpoint has been removed by the Census Bureau. We will support 1990 data again when the endpoint is updated; in the meantime, we recommend using NHGIS (https://nhgis.org) and the ipumsr R package.")
+  }
+
   if (dataset=="acs3") {
     if (year > 2013 || year < 2012)
       stop("The current acs3 survey contains data from 2012-2013. Please select a different year.")
@@ -30,21 +38,21 @@ load_variables <- function(year, dataset, cache = FALSE) {
     rds <- gsub("/", "_", rds)
   }
 
-  if (year > 2009 && (grepl("acs1", dataset) || grepl("acs5", dataset))) {
+  if (year > 2008 && (grepl("acs1", dataset) || grepl("acs5", dataset)) || grepl("acsse", dataset)) {
     dataset <- paste0("acs/", dataset)
   }
 
   get_dataset <- function(d) {
 
     # Account for URL change for 2010 decennial Census
-    if (year == 2010 && dataset == "sf1") {
+    if (year %in% c(2000, 2010) && dataset == "sf1") {
       d <- paste0("dec/", d)
     }
 
     set <- paste(year, d, sep = "/")
 
     # If ACS, use JSON parsing to speed things up
-    if (grepl("acs[135]", d)) {
+    if (grepl("acs[135]|acsse", d)) {
 
       url <- paste("https://api.census.gov/data",
                    set,
@@ -64,7 +72,7 @@ load_variables <- function(year, dataset, cache = FALSE) {
 
       names(out) <- tolower(names(out))
 
-      out1 <- out[grepl("^B[0-9]|^C[0-9]|^DP[0-9]|^S[0-9]|^P[0-9]|^H[0-9]", out$name), ]
+      out1 <- out[grepl("^B[0-9]|^C[0-9]|^DP[0-9]|^S[0-9]|^P[0-9]|^H[0-9]|^K[0-9]", out$name), ]
 
       out1$name <- str_replace(out1$name, "E$|M$", "")
 
@@ -129,7 +137,7 @@ load_variables <- function(year, dataset, cache = FALSE) {
         }
 
 
-        out1 <- out[grepl("^B[0-9]|^C[0-9]|^DP[0-9]|^S[0-9]|^P[0-9]|^H[0-9]", out$name), ]
+        out1 <- out[grepl("^B[0-9]|^C[0-9]|^DP[0-9]|^S[0-9]|^P[0-9]|^H[0-9]|^K[0-9]", out$name), ]
 
         out1$name <- str_replace(out1$name, "E$|M$", "")
 

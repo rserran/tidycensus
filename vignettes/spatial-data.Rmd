@@ -9,7 +9,9 @@ library(tidycensus)
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.width = 8)
 ```
 
-If requested, __tidycensus__ can return simple feature geometry for geographic units along with variables from the decennial US Census or American Community survey.  By setting `geometry = TRUE` in a __tidycensus__ function call, __tidycensus__ will use the __tigris__ package to retrieve the corresponding geographic dataset from the US Census Bureau and pre-merge it with the tabular data obtained from the Census API.  The following example shows median household income from the 2013-2017 ACS for Census tracts in Orange County, California: 
+If requested, __tidycensus__ can return simple feature geometry for geographic units along with variables from the decennial US Census or American Community survey.  By setting `geometry = TRUE` in a __tidycensus__ function call, __tidycensus__ will use the __tigris__ package to retrieve the corresponding geographic dataset from the US Census Bureau and pre-merge it with the tabular data obtained from the Census API.  As of tidycensus version 0.9.9.2, `geometry = TRUE` is supported for all geographies currently available in the package.  
+
+The following example shows median household income from the 2014-2018 ACS for Census tracts in Orange County, California: 
 
 ```{r}
 library(tidycensus)
@@ -22,7 +24,7 @@ orange <- get_acs(state = "CA", county = "Orange", geography = "tract",
 head(orange)
 ```
 
-Our object `orange` looks much like the basic __tidycensus__ output, but with a `geometry` list-column describing the geometry of each feature, using the geographic coordinate system NAD 1983 (EPSG: 4269) which is the default for Census shapefiles.  __tidycensus__ uses the Census [cartographic boundary shapefiles](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) for faster processing; if you prefer the TIGER/Line shapefiles, set `cb = FALSE` in the function call. 
+Our object `orange` looks much like the basic __tidycensus__ output, but with a `geometry` list-column describing the geometry of each feature, using the geographic coordinate system NAD 1983 (EPSG: 4269) which is the default for Census shapefiles.  __tidycensus__ uses the Census [cartographic boundary shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html) for faster processing; if you prefer the TIGER/Line shapefiles, set `cb = FALSE` in the function call. 
 
 As the dataset is in a tidy format, it can be quickly visualized with the `geom_sf` functionality currently in the development version of __ggplot2__: 
 

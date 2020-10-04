@@ -46,12 +46,20 @@ moe_sum <- function(moe, estimate = NULL, na.rm = FALSE) {
 #' @export
 moe_prop <- function(num, denom, moe_num, moe_denom) {
 
+  if (length(num) != length(denom)) {
+    stop("The numerator and denominator vectors must be the same length.",
+         call. = FALSE)
+  }
+
   prop <- num / denom
+
+  result <- moe_ratio(num = num, denom = denom, moe_num = moe_num, moe_denom = moe_denom)
 
   x <- moe_num^2 - (prop^2 * moe_denom^2)
 
-  result <- ifelse(x < 0, moe_ratio(num = num, denom = denom, moe_num = moe_num, moe_denom = moe_denom),
-                   sqrt(x) / denom)
+  pos_x <- x >= 0 & !is.na(x)
+
+  result[pos_x] <- sqrt(x[pos_x]) / denom[pos_x]
 
   return(result)
 }

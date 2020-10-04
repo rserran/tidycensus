@@ -21,12 +21,16 @@ library(tidyverse)
 census_api_key("YOUR API KEY GOES HERE")
 ```
 
-There are two major functions implemented in __tidycensus__: `get_decennial`, which grants access to the 1990, 2000, and 2010 decennial US Census APIs, and `get_acs`, which grants access to the 5-year American Community Survey APIs.  In this basic example, let's look at median gross rent by state in 1990: 
+There are two major functions implemented in __tidycensus__: `get_decennial()`, which grants access to the 2000 and 2010 decennial US Census APIs, and `get_acs()`, which grants access to the 1-year and 5-year American Community Survey APIs.  _Note: at the moment, access to the 1990 (SF1 and SF3) and 2000 (SF3) APIs has been suspended._ 
+
+In this basic example, let's look at median age by state in 2010: 
 
 ```{r}
-m90 <- get_decennial(geography = "state", variables = "H043A001", year = 1990)
+age10 <- get_decennial(geography = "state", 
+                       variables = "P013001", 
+                       year = 2010)
 
-head(m90)
+head(age10)
 ```
 
 The function returns a tibble with four columns by default: `GEOID`, which is an identifier for the geographical unit associated with the row; `NAME`, which is a descriptive name of the geographical unit; `variable`, which is the Census variable represented in the row; and `value`, which is the value of the variable for that unit.  By default, __tidycensus__ functions return tidy data frames in which rows represent unit-variable combinations; for a wide data frame with Census variable names in the columns, set `output = "wide"` in the function call.  
@@ -34,7 +38,7 @@ The function returns a tibble with four columns by default: `GEOID`, which is an
 As the function has returned a tidy object, we can visualize it quickly with __ggplot2__: 
 
 ```{r, fig.height = 8}
-m90 %>%
+age10 %>%
   ggplot(aes(x = value, y = reorder(NAME, value))) + 
   geom_point()
 ```
@@ -47,9 +51,9 @@ If __state__ or __county__ is in bold face in "Available by", you are required t
 
 |Geography|Definition|Available by|Available in|
 |---------|----------|------------|------------|
-|`"us"`|United States||`get_acs()`| 
-|`"region"`|Census region||`get_acs()`| 
-|`"division"`|Census division||`get_acs()`| 
+|`"us"`|United States||`get_acs()`, `get_decennial()`| 
+|`"region"`|Census region||`get_acs()`, `get_decennial()`| 
+|`"division"`|Census division||`get_acs()`, `get_decennial()`| 
 |`"state"`|State or equivalent|state|`get_acs()`, `get_decennial()`| 
 |`"county"`|County or equivalent|state, county|`get_acs()`, `get_decennial()`| 
 |`"county subdivision"`|County subdivision|__state__, county|`get_acs()`, `get_decennial()`| 
@@ -59,17 +63,17 @@ If __state__ or __county__ is in bold face in "Available by", you are required t
 |`"place"`|Census-designated place|state|`get_acs()`, `get_decennial()`|  
 |`"alaska native regional corporation"`|Alaska native regional corporation|state|`get_acs()`, `get_decennial()`|  
 |`"american indian area/alaska native area/hawaiian home land"`|Federal and state-recognized American Indian reservations and Hawaiian home lands|state|`get_acs()`, `get_decennial()`|  
-|`"american indian area/alaska native area (reservation or statistical entity only)"`|Only reservations and statistical entities|state|`get_acs()`| 
+|`"american indian area/alaska native area (reservation or statistical entity only)"`|Only reservations and statistical entities|state|`get_acs()`, `get_decennial()`| 
 |`"american indian area (off-reservation trust land only)/hawaiian home land"`|Only off-reservation trust lands and Hawaiian home lands|state|`get_acs()`| 
 |`"metropolitan statistical area/micropolitan statistical area"`|Core-based statistical area|state|`get_acs()`, `get_decennial()`|
-|`"combined statistical area"`|Combined statistical area|state|`get_acs()`| 
-|`"new england city and town area"`|New England city/town area|state|`get_acs()`| 
-|`"combined new england city and town area"`|Combined New England area|state|`get_acs()`| 
-|`"urban area"`|Census-defined urbanized areas||`get_acs()`| 
+|`"combined statistical area"`|Combined statistical area|state|`get_acs()`, `get_decennial()`| 
+|`"new england city and town area"`|New England city/town area|state|`get_acs()`, `get_decennial()`| 
+|`"combined new england city and town area"`|Combined New England area|state|`get_acs()`, `get_decennial()`| 
+|`"urban area"`|Census-defined urbanized areas||`get_acs()`, `get_decennial()`| 
 |`"congressional district"`|Congressional district for the year-appropriate Congress|state|`get_acs()`, `get_decennial()`|  
-|`"school district (elementary)"`|Elementary school district|__state__|`get_acs()`| 
-|`"school district (secondary)"`|Secondary school district|__state__|`get_acs()`| 
-|`"school district (unified)"`|Unified school district|__state__|`get_acs()`| 
+|`"school district (elementary)"`|Elementary school district|__state__|`get_acs()`, `get_decennial()`| 
+|`"school district (secondary)"`|Secondary school district|__state__|`get_acs()`, `get_decennial()`| 
+|`"school district (unified)"`|Unified school district|__state__|`get_acs()`, `get_decennial()`| 
 |`"public use microdata area"`|PUMA (geography associated with Census microdata samples)|state|`get_acs()`| 
 |`"zip code tabulation area"` OR `"zcta"`|Zip code tabulation area||`get_acs()`, `get_decennial()`|  
 |`"state legislative district (upper chamber)"`|State senate districts|__state__|`get_acs()`, `get_decennial()`|  
@@ -78,7 +82,7 @@ If __state__ or __county__ is in bold face in "Available by", you are required t
 
 ## Searching for variables
 
-Getting variables from the Census or ACS requires knowing the variable ID - and there are thousands of these IDs across the different Census files.  To rapidly search for variables, use the `load_variables` function.  The function takes two required arguments: the year of the Census or endyear of the ACS sample, and the dataset - one of `"sf1"`, `"sf3"`, or `"acs5"`. For ideal functionality, I recommend assigning the result of this function to a variable, setting `cache = TRUE` to store the result on your computer for future access, and using the `View` function in RStudio to interactively browse for variables.  
+Getting variables from the Census or ACS requires knowing the variable ID - and there are thousands of these IDs across the different Census files.  To rapidly search for variables, use the `load_variables()` function.  The function takes two required arguments: the year of the Census or endyear of the ACS sample, and the dataset - one of `"sf1"`, `"sf3"`, or `"acs5"`. For ideal functionality, I recommend assigning the result of this function to a variable, setting `cache = TRUE` to store the result on your computer for future access, and using the `View` function in RStudio to interactively browse for variables.  
 
 ```{r, eval = FALSE}
 v17 <- load_variables(2017, "acs5", cache = TRUE)
@@ -92,7 +96,7 @@ By filtering for "median age" I can quickly view the variable IDs that correspon
 
 ## Working with ACS data
 
-American Community Survey data differ from decennial Census data in that ACS data are based on an annual sample of approximately 3 million households, rather than a more complete enumeration of the US population.  In turn, ACS data points are __estimates__ characterized by a __margin of error__.  __tidycensus__ will always return the estimate and margin of error together for any requested variables.  In turn, when requesting ACS data with __tidycensus__, it is not necessary to specify the `"E"` or `"M"` suffix for a variable name.  Let's fetch median household income data from the 2014-2018 ACS for counties in Vermont. 
+American Community Survey data differ from decennial Census data in that ACS data are based on an annual sample of approximately 3 million households, rather than a more complete enumeration of the US population.  In turn, ACS data points are __estimates__ characterized by a __margin of error__.  __tidycensus__ will always return the estimate and margin of error together for any requested variables when using `get_acs()`.  In turn, when requesting ACS data with __tidycensus__, it is not necessary to specify the `"E"` or `"M"` suffix for a variable name.  Let's fetch median household income data from the 2014-2018 ACS for counties in Vermont. 
 
 ```{r}
 vt <- get_acs(geography = "county", 
@@ -103,7 +107,7 @@ vt <- get_acs(geography = "county",
 vt
 ```
 
-The output is similar to a call to `get_decennial`, but instead of a `value` column, `get_acs` returns `estimate` and `moe` columns for the ACS estimate and margin of error, respectively.  `moe` represents the default 90 percent confidence level around the estimate; this can be changed to 95 or 99 percent with the `moe_level` parameter in `get_acs` if desired. 
+The output is similar to a call to `get_decennial()`, but instead of a `value` column, `get_acs` returns `estimate` and `moe` columns for the ACS estimate and margin of error, respectively.  `moe` represents the default 90 percent confidence level around the estimate; this can be changed to 95 or 99 percent with the `moe_level` parameter in `get_acs` if desired. 
 
 As we have the margin of error, we can visualize the uncertainty around the estimate: 
 
@@ -114,7 +118,7 @@ vt %>%
   geom_errorbarh(aes(xmin = estimate - moe, xmax = estimate + moe)) +
   geom_point(color = "red", size = 3) +
   labs(title = "Household income by county in Vermont",
-       subtitle = "2013-2017 American Community Survey",
+       subtitle = "2014-2018 American Community Survey",
        y = "",
        x = "ACS estimate (bars represent margin of error)")
 ```

@@ -62,7 +62,7 @@
 #'   geom_sf() +
 #'   coord_sf(crs = 26914) +
 #'   scale_fill_viridis(option = "magma") +
-#'   scale_color_viridis(options = "magma")
+#'   scale_color_viridis(option = "magma")
 #'
 #'
 #' vt <- get_acs(geography = "county", variables = "B19013_001", state = "VT")
@@ -86,6 +86,10 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
                     shift_geo = FALSE, summary_var = NULL, key = NULL,
                     moe_level = 90, survey = "acs5", show_call = FALSE, ...) {
 
+  if (year < 2009) {
+    stop("ACS support in tidycensus begins with the 2005-2009 5-year ACS. Consider using decennial Census data instead.", call. = FALSE)
+  }
+
   if (!is.null(endyear)) {
     year <- endyear
     message("The `endyear` parameter is deprecated and will be removed in a future release.  Please use `year` instead.")
@@ -94,6 +98,24 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
   if (length(table) > 1) {
     stop("Only one table may be requested per call.", call. = FALSE)
   }
+
+  if (!is.null(variables)) {
+    if (any(grepl("^K[0-9].", variables))) {
+      message("Getting data from the ACS 1-year Supplemental Estimates.  Data are available for geographies with populations of 20,000 and greater.")
+      survey <- "acsse"
+
+    }
+  }
+
+  if (!is.null(table)) {
+    if (grepl("^K[0-9].", table)) {
+      message("Getting data from the ACS 1-year Supplemental Estimates.  Data are available for geographies with populations of 20,000 and greater.")
+      survey <- "acsse"
+
+    }
+  }
+
+
 
   if (survey == "acs1") {
     message(sprintf("Getting data from the %s 1-year ACS", year))
@@ -160,7 +182,11 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
 
   if (geography == "cbsa") geography <- "metropolitan statistical area/micropolitan statistical area"
 
+  if (geography == "cbg") geography <- "block group"
+
   if (geography == "zcta") geography <- "zip code tabulation area"
+
+  if (geography == "puma") geography <- "public use microdata area"
 
   if (geography == "zip code tabulation area" && (!is.null(state) || !is.null(county))) {
     stop("ZCTAs can only be requested for the entire country, not within states or counties.",
@@ -258,12 +284,17 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
   # are requested - take care of this under the hood by having the function
   # call itself for "B" variables, "S" variabls and "DP" variables then combining the results
 
-  if (length(unique(substr(variables, 1, 1))) > 1) {
+  if (length(unique(substr(variables, 1, 1))) > 1 && !all(unique(substr(variables, 1, 1)) %in% c("B", "C"))) {
 
-    message('Fetching data by table type ("B", "S", "DP") and combining the result.')
+    if (any(grepl("^K[0-9].", variables))) {
+      stop("At the moment, supplemental estimates variables cannot be combined with variables from other datasets.", call. = FALSE)
+
+    }
+
+    message('Fetching data by table type ("B/C", "S", "DP") and combining the result.')
 
     # split variables by type into list, discard empty list elements
-    vars_by_type <- map(c("^B", "^S", "^D"), ~ str_subset(variables, .x)) %>%
+    vars_by_type <- map(c("^B|^C", "^S", "^D"), ~ str_subset(variables, .x)) %>%
       purrr::compact()
 
     if (geometry) {
@@ -449,7 +480,8 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
                 key = key,
                 moe_level = moe_level,
                 survey = survey,
-                show_call = show_call))
+                show_call = show_call)) %>%
+          st_cast("MULTIPOLYGON")
       }) %>%
         reduce(rbind)
       geoms <- unique(st_geometry_type(result))
@@ -484,8 +516,8 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
   }
 
   if ((geography == "block group" && length(county) > 1)) {
-    # mc <- match.call(expand.dots = TRUE)
     if (geometry) {
+      message("Fetching block group data by county and combining the result.")
       result <- map(county, ~{
         suppressMessages(
           insist_get_acs(geography = geography,
@@ -503,63 +535,8 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
                 key = key,
                 moe_level = moe_level,
                 survey = survey,
-                show_call = show_call))
-      }) %>%
-        reduce(rbind)
-      geoms <- unique(st_geometry_type(result))
-      if (length(geoms) > 1) {
-        result <- st_cast(result, "MULTIPOLYGON")
-      }
-      result <- result %>%
-        as_tibble() %>%
-        st_as_sf()
-    } else {
-      result <- map_df(county, ~{
-        suppressMessages(
-          insist_get_acs(geography = geography,
-                variables = variables,
-                table = table,
-                cache_table = cache_table,
-                year = year,
-                output = output,
-                state = state,
-                county = .x,
-                summary_var = summary_var,
-                geometry = geometry,
-                keep_geo_vars = keep_geo_vars,
-                shift_geo = FALSE,
-                key = key,
-                moe_level = moe_level,
-                survey = survey,
-                show_call = show_call))
-      })
-    }
-    return(result)
-  }
-
-  if (geography == "block group" && length(county) > 1) {
-    # mc <- match.call(expand.dots = TRUE)
-    if (geometry) {
-      message("Fetching block group data by county and combining the result.")
-
-      result <- map(county, ~{
-        suppressMessages(
-          insist_get_acs(geography = geography,
-                variables = variables,
-                table = table,
-                cache_table = cache_table,
-                year = year,
-                output = output,
-                state = state,
-                county = .x,
-                summary_var = summary_var,
-                geometry = geometry,
-                keep_geo_vars = keep_geo_vars,
-                shift_geo = FALSE,
-                key = key,
-                moe_level = moe_level,
-                survey = survey,
-                show_call = show_call))
+                show_call = show_call)) %>%
+          st_cast("MULTIPOLYGON")
       }) %>%
         reduce(rbind)
       geoms <- unique(st_geometry_type(result))
@@ -571,7 +548,6 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
         st_as_sf()
     } else {
       message("Fetching block group data by county and combining the result.")
-
       result <- map_df(county, ~{
         suppressMessages(
           insist_get_acs(geography = geography,
@@ -611,6 +587,8 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
       survey2 <- paste0(survey, "/subject")
     } else if (grepl("^DP[0-9].", table)) {
       survey2 <- paste0(survey, "/profile")
+    } else if (grepl("^K[0-9].", table)) {
+      survey2 <- "acsse"
     } else {
       survey2 <- survey
     }
@@ -707,10 +685,8 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
 
     # dat[[moe_vars]] <- apply(dat[[moe_vars]], 2, function(x) round(x * moe_factor, 0))
 
-    moex <- function(x) x * moe_factor
-
     dat2 <- dat %>%
-      mutate_if(grepl("*M$", names(.)), funs(moex))
+      mutate_if(grepl("*M$", names(.)), list(~(. * moe_factor)))
 
     if (!is.null(names(variables))) {
       for (i in 1:length(variables)) {
@@ -724,6 +700,12 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
   }
 
   if (!is.null(summary_var)) {
+
+    if (length(summary_var) > 1) {
+      stop(paste0("Only one summary variable may be used per pull. ",
+                  "Alternatively, place all variables in `variables` and ",
+                  "use `output='wide'`"))
+    }
 
     sumvar <- format_variables_acs(summary_var)
 

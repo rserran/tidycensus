@@ -128,29 +128,9 @@ format_variables_acs <- function(variables) {
 load_data_acs <- function(geography, formatted_variables, key, year, state = NULL,
                           county = NULL, survey, show_call = FALSE) {
 
-  # No longer necessary: see https://www.census.gov/content/dam/Census/data/developers/acs/acs-data-variables-guide.pdf
-  # if (survey == "acs1") {
-  #   if (year > 2014) {
-  #     survey <- "acs/acs1"
-  #   }
-  # }
-  #
-  # if (survey == "acs5" && year > 2014) {
-  #   survey <- "acs/acs5"
-  # }
-
-  if (year == 2009) {
-    # Only the old endpoint works right now for 2005-2009
-    base <- paste("https://api.census.gov/data",
-                  as.character(year),
-                  survey, sep = "/")
-  } else {
-    base <- paste("https://api.census.gov/data",
+  base <- paste("https://api.census.gov/data",
                   as.character(year), "acs",
                   survey, sep = "/")
-  }
-
-
 
   if (grepl("^DP", formatted_variables)) {
     message("Using the ACS Data Profile")
@@ -161,6 +141,8 @@ load_data_acs <- function(geography, formatted_variables, key, year, state = NUL
     message("Using the ACS Subject Tables")
     base <- paste0(base, "/subject")
   }
+
+
 
   for_area <- paste0(geography, ":*")
 
@@ -306,17 +288,23 @@ load_data_decennial <- function(geography, variables, key, year, sumfile,
     vars_to_get <- paste0(var, ",NAME")
   }
 
-  if (year == 2010) {
-    base <- paste0("https://api.census.gov/data/",
-                   year,
-                   "/dec/",
-                   sumfile)
-  } else {
-    base <- paste0("https://api.census.gov/data/",
-                   year,
-                   "/",
-                   sumfile)
-  }
+
+  base <- paste0("https://api.census.gov/data/",
+                                  year,
+                                  "/dec/",
+                                  sumfile)
+
+  # if (year == 2010) {
+  #   base <- paste0("https://api.census.gov/data/",
+  #                  year,
+  #                  "/dec/",
+  #                  sumfile)
+  # } else {
+  #   base <- paste0("https://api.census.gov/data/",
+  #                  year,
+  #                  "/",
+  #                  sumfile)
+  # }
 
 
 
@@ -397,6 +385,8 @@ load_data_decennial <- function(geography, variables, key, year, sumfile,
 
     if (grepl("The requested resource is not available", msg)) {
       stop("One or more of your requested variables is likely not available at the requested geography.  Please refine your selection.", call. = FALSE)
+    } else if (grepl("unknown variable", msg) && length(variables) > 1 && year < 2010) {
+      stop(sprintf("The Census API has returned the error message %s.\nThis may be due to mixing SF1 and SF3 variables. If so, separate your requests to SF1 and SF3 when using `get_decennial()` by using the `sumfile` argument in separate calls.", msg))
     } else {
       stop(sprintf("Your API call has errors.  The API message returned is %s.", msg), call. = FALSE)
     }
@@ -481,16 +471,22 @@ load_data_estimates <- function(geography, product = NULL, variables = NULL, key
 
   for_area <- paste0(geography, ":*")
 
+  if (year == 2019) {
+    geo_name <- "NAME"
+  } else {
+    geo_name <- "GEONAME"
+  }
+
   if (is.null(variables)) {
     if (is.null(product)) {
       stop("Either a product or a vector of variables is required.", call. = FALSE)
     } else {
       if (product == "population") {
-        vars_to_get <- "GEONAME,POP,DENSITY"
+        vars_to_get <- paste0(geo_name, ",POP,DENSITY")
       } else if (product == "components") {
-        vars_to_get <- "GEONAME,BIRTHS,DEATHS,DOMESTICMIG,INTERNATIONALMIG,NATURALINC,NETMIG,RBIRTH,RDEATH,RDOMESTICMIG,RINTERNATIONALMIG,RNATURALINC,RNETMIG"
+        vars_to_get <- paste0(geo_name, ",BIRTHS,DEATHS,DOMESTICMIG,INTERNATIONALMIG,NATURALINC,NETMIG,RBIRTH,RDEATH,RDOMESTICMIG,RINTERNATIONALMIG,RNATURALINC,RNETMIG")
       } else if (product == "housing") {
-        vars_to_get <- "GEONAME,HUEST"
+        vars_to_get <- paste0(geo_name, ",HUEST")
       } else {
         stop("Other products are not yet supported.", call. = FALSE)
       }
@@ -509,18 +505,18 @@ load_data_estimates <- function(geography, product = NULL, variables = NULL, key
         product <- "housing"
       }
     }
-    vars_to_get <- paste0("GEONAME,", paste0(variables, collapse = ","))
+    vars_to_get <- paste0(geo_name, ",", paste0(variables, collapse = ","))
   }
 
   if (time_series) {
     if (product == "components") {
-      if (year == 2018) {
+      if (year >= 2018) {
         vars_to_get <- paste0(vars_to_get, ",PERIOD_CODE")
       } else {
         vars_to_get <- paste0(vars_to_get, ",PERIOD")
       }
     } else {
-      if (year == 2018) {
+      if (year >= 2018) {
         vars_to_get <- paste0(vars_to_get, ",DATE_CODE")
       } else {
         vars_to_get <- paste0(vars_to_get, ",DATE_")
@@ -629,11 +625,11 @@ load_data_estimates <- function(geography, product = NULL, variables = NULL, key
 
   var_vector <- unlist(strsplit(vars_to_get, split = ","))
 
-  var_vector <- var_vector[var_vector != "GEONAME"]
+  var_vector <- var_vector[var_vector != geo_name]
 
   dat[var_vector] <- lapply(dat[var_vector], as.numeric)
 
-  v2 <- c(var_vector, "GEONAME")
+  v2 <- c(var_vector, geo_name)
 
   if ("county" %in% names(dat)) {
     dat$county <- stringr::str_pad(dat$county, 3, "left", "0")
@@ -648,5 +644,220 @@ load_data_estimates <- function(geography, product = NULL, variables = NULL, key
   # Now, remove them
   dat <- dat[, !(names(dat) %in% id_vars)]
 
+  return(dat)
+}
+
+
+
+load_data_pums <- function(variables, state, puma, key, year, survey, recode, show_call) {
+
+
+  var <- paste0(variables, collapse = ",")
+
+  vars_to_get <- paste0("SERIALNO,SPORDER,WGTP,PWGTP,", var)
+
+  base <- sprintf("https://api.census.gov/data/%s/acs/%s/pums",
+                  year, survey)
+
+
+  if (!is.null(puma)) {
+
+    if (length(state) > 1) {
+      stop('When requesting PUMAs for more than one state, you must set state to "multiple" and set puma to a named vector of state/PUMA pairs.', call. = FALSE)
+    }
+
+    # pumas in multiple states can be requested with a named vector of
+    # state / puma pairs in the puma argument of get_pums()
+    if (state == "multiple") {
+
+      # print FIPS code of states used just once
+      purrr::walk(unique(names(puma)), validate_state)
+
+      geo <- purrr::map2_chr(names(puma), unname(puma), function(x, y) {
+        paste0("7950000US", suppressMessages(validate_state(x)), y)
+      })
+
+      geo <- paste0(geo, collapse = ",")
+
+    } else {
+      # if PUMAs requested are in one state only
+      state <- validate_state(state)
+      geo <- map_chr(puma, function(x) {
+        paste0("7950000US", state, x)
+      })
+
+      if (length(puma) > 1) {
+        geo <- paste0(geo, collapse = ",")
+      }
+    }
+  } else {
+    # if no PUMAs specified, get all PUMAs in each state requested
+    if (!is.null(state)) {
+      geo <- map_chr(state, function(x) {
+        paste0("0400000US", validate_state(x))
+      })
+
+    } else {
+      geo <- NULL
+    }
+
+    if (length(state) > 1) {
+      geo <- paste0(geo, collapse = ",")
+
+    }
+  }
+
+  call <- GET(base,
+              query = list(get = vars_to_get,
+                           ucgid = geo,
+                           key = key),
+              progress())
+
+  if (show_call) {
+    call_url <- gsub("&key.*", "", call$url)
+    message(paste("Census API call:", call_url))
+  }
+
+  # Make sure call status returns 200, else, print the error message for the user.
+  if (call$status_code != 200) {
+    msg <- content(call, as = "text")
+
+    if (grepl("The requested resource is not available", msg)) {
+      stop("One or more of your requested variables is likely not available at the requested geography.  Please refine your selection.", call. = FALSE)
+    } else {
+      stop(sprintf("Your API call has errors.  The API message returned is %s.", msg), call. = FALSE)
+    }
+
+  }
+
+
+  content <- content(call, as = "text")
+
+  if (grepl("You included a key with this request", content)) {
+    stop("You have supplied an invalid or inactive API key. To obtain a valid API key, visit https://api.census.gov/data/key_signup.html. To activate your key, be sure to click the link provided to you in the email from the Census Bureau that contained your key.", call. = FALSE)
+  }
+
+  dat <- fromJSON(content)
+
+  colnames(dat) <- dat[1,]
+
+  dat <- as_tibble(dat)
+
+  dat <- dat[-1,]
+
+  # Convert the weights columns to numeric
+  dat$WGTP <- as.numeric(dat$WGTP)
+  dat$PWGTP <- as.numeric(dat$PWGTP)
+
+  # Filter the pums lookup table for the selected year and survey
+  pums_variables_filter <- tidycensus::pums_variables %>%
+    filter(year == !!year, survey == !!survey)
+
+  # Do some clean up of the API response: pad returned values with 0s when
+  # necessary to match data dictionary codes and
+  # convert variables to numeric according to data dictionary
+
+  # But wait, this only works when the serial numbers are correctly returned and and we have variable metadata in pums_variables
+  if (year %in% c(2017, 2018)) {
+    var_val_length <- pums_variables_filter %>%
+      filter(!is.na(.data$val_length)) %>%
+      distinct(.data$var_code, .data$val_length, .data$val_na)
+
+    num_vars <- pums_variables_filter %>%
+      filter(.data$data_type == "num") %>%
+      distinct(.data$var_code) %>%
+      pull()
+
+    # For all variables in which we know what the length should be, pad with 0s
+    dat_padded <- suppressWarnings(
+      dat %>%
+        select(.data$SERIALNO, .data$SPORDER, any_of(var_val_length$var_code)) %>%
+        pivot_longer(
+          cols = -c(.data$SERIALNO, .data$SPORDER),
+          names_to = "var_code",
+          values_to = "val"
+        ) %>%
+        left_join(var_val_length, by = "var_code") %>%
+        mutate(
+          val = ifelse(!is.na(.data$val_na) & .data$val_na == .data$val, strrep("b", .data$val_length), .data$val),
+          val = ifelse(.data$var_code != "NAICSP", str_pad(.data$val, .data$val_length, pad = "0"), .data$val),
+          val = ifelse(.data$var_code == "NAICSP" & .data$val == "*", "bbbbbbbb", .data$val),  # special NULL value returned by API for this var
+        ) %>%
+        select(-.data$val_length, -.data$val_na) %>%
+        pivot_wider(
+          names_from = .data$var_code,
+          values_from = .data$val
+        )
+    )
+
+    # Rejoin padded variables to API return
+    dat <- dat %>%
+      select(.data$SERIALNO, .data$SPORDER, !any_of(var_val_length$var_code)) %>%
+      left_join(dat_padded, by = c("SERIALNO", "SPORDER")) %>%
+      mutate_at(vars(any_of(num_vars)), as.double)
+    }
+
+  # Do you want to return value labels also?
+  if (recode) {
+
+    # Only works for 2017 because it's the only year included in pums_variables for now
+    if (year %in% 2017:2018) {
+      var_lookup <- pums_variables_filter %>%
+        select(.data$var_code, val = .data$val_min, .data$val_label)
+
+      # Vector of variables that are possible to recode
+      vars_to_recode <- pums_variables_filter %>%
+        filter(.data$recode) %>%
+        distinct(.data$var_code) %>%
+        pull()
+
+      # Pivot to long format and join variable codes to lookup table with labels
+      recoded_long <- suppressWarnings(
+        dat %>%
+        select(.data$SERIALNO, .data$SPORDER, any_of(vars_to_recode)) %>%
+        pivot_longer(
+          cols = -c(.data$SERIALNO, .data$SPORDER),
+          names_to = "var_code",
+          values_to = "val"
+        ) %>%
+        left_join(var_lookup, by = c("var_code", "val")) %>%
+        select(-.data$val)
+      )
+
+      # Create a "pivot spec" with nicer names for the labeled columns
+      # https://tidyr.tidyverse.org/articles/pivot.html#wider-1
+      spec <- recoded_long %>%
+        build_wider_spec(
+          names_from = .data$var_code,
+          values_from = .data$val_label
+        ) %>%
+        mutate(.name = paste0(.data$var_code, "_label", ""))
+
+      recoded_wide <- recoded_long %>%
+        pivot_wider_spec(spec)
+
+      recode_v <- recoded_long %>% pull(var_code) %>% unique()
+
+      for (var in recode_v){
+
+        order_v <- var_lookup %>%
+          filter(var_code==var) %>%
+          pull(val_label)
+
+        var_label <- str_c(var, "_label")
+
+        recoded_wide[[var_label]] <-
+          readr::parse_factor(recoded_wide[[var_label]], ordered=TRUE, levels=order_v)
+
+      }
+
+
+      # Join recoded columns to API return
+      dat <- dat %>%
+        left_join(recoded_wide, by = c("SERIALNO", "SPORDER"))
+    } else {
+      message("Recoding is currently only supported for 2017 and 2018 1-year and 5-year data. Returning original data only.")
+      }
+    }
   return(dat)
 }
