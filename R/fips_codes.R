@@ -68,14 +68,14 @@
 #' Dataset with PUMS variables and codes
 #'
 #' Built-in dataset that is created from the
-#' \href{https://www.census.gov/programs-surveys/acs/technical-documentation/pums/documentation.2018.html}{Census
+#' \href{https://www.census.gov/programs-surveys/acs/microdata/documentation.html}{Census
 #' PUMS data dictionaries}. Use this dataset to lookup the names of variables to
 #' use in \code{\link{get_pums}}. This dataset also contains labels for the
 #' coded values returned by the Census API and is used when \code{recode = TRUE}
 #' in \code{\link{get_pums}}.
 #'
 #' Because variable names and codes change from year to year, you should filter
-#' this dataset for the survey and year of interest. NOTE: only 2017 and 2018 (acs1 and
+#' this dataset for the survey and year of interest. NOTE: 2017 - 2019 (acs1 and
 #' acs5) variables are available.
 #'
 #' @title Dataset with PUMS variables and codes
@@ -104,5 +104,31 @@
 #'
 #' @usage data(pums_variables)
 "pums_variables"
+
+
+#' Dataset with Migration Flows characteristic recodes
+#'
+#' Built-in dataset that is created from the
+#' \href{https://www.census.gov/data/developers/data-sets/acs-migration-flows.html}{Migration
+#' Flows API documentation}. This dataset contains labels for the coded values
+#' returned by the Census API and is used when \code{breakdown_labels = TRUE} in
+#' \code{\link{get_flows}}.
+#'
+#' @title Dataset with Migration Flows characteristic recodes
+#' @description Built-in dataset for Migration Flows code label lookup.
+#'
+#' \itemize{
+#'   \item \code{characteristic}: Characteristic variable name
+#'   \item \code{code}: Characteristic calue code
+#'   \item \code{desc}: Characteristic calue label
+#'   \item \code{ordered}: Whether or not recoded value should be ordered factor
+#' }
+#'
+#' @docType data
+#' @keywords datasets
+#' @name mig_recodes
+#'
+#' @usage data(mig_recodes)
+"mig_recodes"
 
 
