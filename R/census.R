@@ -1,4 +1,4 @@
-#' Obtain data and feature geometry for the decennial Census
+#' Obtain data and feature geometry for the decennial US Census
 #'
 #' @param geography The geography of your data.
 #' @param variables Character string or vector of character strings of variable
@@ -11,7 +11,8 @@
 #'                    Defaults to FALSE; if TRUE, only needs to be called once per
 #'                    dataset.  If variables dataset is already cached via the
 #'                    \code{load_variables} function, this can be bypassed.
-#' @param year The year for which you are requesting data.   are available.
+#' @param year The year for which you are requesting data. Defaults to 2010; 2000,
+#'             2010, and 2020 are available.
 #' @param sumfile The Census summary file.  Defaults to sf1; the function will look in sf3 if it
 #'                cannot find a variable in sf1.
 #' @param state The state for which you are requesting data. State
@@ -360,7 +361,6 @@ get_decennial <- function(geography, variables = NULL, table = NULL, cache_table
 
     if (shift_geo) {
 
-
       if (!is.null(state)) {
         stop("`shift_geo` is only available when requesting geometry for the entire US", call. = FALSE)
       }
@@ -405,9 +405,35 @@ get_decennial <- function(geography, variables = NULL, table = NULL, cache_table
         st_as_sf()
     }
 
+    # Give users a heads-up about differential privacy in the 2020 decennial data
+    # This should print as the final message before data are returned
+    if (year == 2020) {
+
+      msg <- c(crayon::cyan(stringr::str_wrap("Note: 2020 decennial Census data use differential privacy, a technique that introduces errors into data to preserve respondent confidentiality.")),
+               i = crayon::magenta("Small counts should be interpreted with caution."),
+               i = crayon::magenta("See https://www.census.gov/library/fact-sheets/2021/protecting-the-confidentiality-of-the-2020-census-redistricting-data.html for additional guidance."))
+
+      rlang::inform(msg, .frequency = "once",
+                    .frequency_id = "msg2020")
+
+    }
+
     return(out)
 
   } else {
+
+    # Give users a heads-up about differential privacy in the 2020 decennial data
+    # This should print as the final message before data are returned
+    if (year == 2020) {
+
+      msg <- c(crayon::cyan(stringr::str_wrap("Note: 2020 decennial Census data use differential privacy, a technique that introduces errors into data to preserve respondent confidentiality.")),
+               i = crayon::magenta("Small counts should be interpreted with caution."),
+               i = crayon::magenta("See https://www.census.gov/library/fact-sheets/2021/protecting-the-confidentiality-of-the-2020-census-redistricting-data.html for additional guidance."))
+
+      rlang::inform(msg, .frequency = "once",
+                    .frequency_id = "msg2020")
+
+    }
 
     return(dat2)
 
