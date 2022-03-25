@@ -91,6 +91,11 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
                     shift_geo = FALSE, summary_var = NULL, key = NULL,
                     moe_level = 90, survey = "acs5", show_call = FALSE, ...) {
 
+  # Error message for 1-year 2020 ACS
+  if (year == 2020 && survey == "acs1") {
+    stop("The regular 1-year ACS was not released in 2020 due to low response rates.\nThe Census Bureau released a set of experimental estimates for the 2020 1-year ACS\nthat are not available in tidycensus.\nThese estimates can be downloaded at https://www.census.gov/programs-surveys/acs/data/experimental-data/1-year.html.", call. = FALSE)
+  }
+
   if (shift_geo) {
     warning("The `shift_geo` argument is deprecated and will be removed in a future release. We recommend using `tigris::shift_geometry()` instead.", call. = FALSE)
   }
@@ -326,6 +331,10 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
     if (any(grepl("^K[0-9].", variables))) {
       stop("At the moment, supplemental estimates variables cannot be combined with variables from other datasets.", call. = FALSE)
 
+    }
+
+    if (any(grepl("^CP[0-9].", variables))) {
+      stop("Comparison profiles variables cannot be mixed with variables from other datasets in tidycensus; please request CP data separately.", call. = FALSE)
     }
 
     message('Fetching data by table type ("B/C", "S", "DP") and combining the result.')
@@ -644,6 +653,8 @@ get_acs <- function(geography, variables = NULL, table = NULL, cache_table = FAL
       survey2 <- paste0(survey, "/profile")
     } else if (grepl("^K[0-9].", table)) {
       survey2 <- "acsse"
+    } else if (grepl("^CP[0-9].", table)) {
+      survey2 <- paste0(survey, "/cprofile")
     } else {
       survey2 <- survey
     }
