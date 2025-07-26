@@ -5,6 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.width = 8)
+options(tigris_use_cache = TRUE)
 ```
 
 The main intent of the tidycensus package is to return population characteristics of the United States in tidy format allowing for integration with simple feature geometries.  Its intent is not, and has never been, to wrap the universe of APIs and datasets available from the US Census Bureau.  For datasets not included in tidycensus, I recommend Hannah Recht's __censusapi__ package (https://github.com/hrecht/censusapi), which allows R users to access all Census APIs, and packages such as Jamaal Green's __lehdr__ package (https://github.com/jamgreen/lehdr) which grants R users access to Census Bureau LODES data.   
@@ -19,7 +20,7 @@ The post-2020 Population Estimates are no longer on the Census API, but they are
 
 ### Components of change population estimates
 
-By default, specifying `"population"`, `"components"`, or `"housing"` (housing is not available for 2020 and later) as the `product` in `get_estimates()` returns all variables associated with that component.   For example, we can request all components of change variables for US states in 2023: 
+By default, specifying `"population"`, `"components"`, or `"housing"` (housing is not available for 2020 and later) as the `product` in `get_estimates()` returns all variables associated with that component.   For example, we can request all components of change variables for US states in 2024: 
 
 ```{r}
 library(tidycensus)
@@ -27,7 +28,7 @@ library(tidyverse)
 library(tigris)
 options(tigris_use_cache = TRUE)
 
-us_components <- get_estimates(geography = "state", product = "components", vintage = 2023)
+us_components <- get_estimates(geography = "state", product = "components", vintage = 2024)
 
 us_components
 ```
@@ -40,13 +41,13 @@ unique(us_components$variable)
 
 Available geographies include `"us"`, `"state"`, `"county"`, `"metropolitan statistical area/micropolitan statistical area"` or `"cbsa"`, `"combined statistical area"`, and `"place"`.   
 
-If desired, users can request a specific component or components by supplying a character vector to the `variables` parameter, as in other tidycensus functions.   `get_estimates()` also supports simple feature geometry integration to facilitate mapping.   In the example below, we'll acquire data on the net migration rate between 2022 and 2023 for all counties in the United States. We'll also use the `shift_geometry()` function from the __tigris__ package to shift and rescale counties outside the continental US for national mapping.   
+If desired, users can request a specific component or components by supplying a character vector to the `variables` parameter, as in other tidycensus functions.   `get_estimates()` also supports simple feature geometry integration to facilitate mapping.   In the example below, we'll acquire data on the net migration rate between 2023 and 2024 for all counties in the United States. We'll also use the `shift_geometry()` function from the __tigris__ package to shift and rescale counties outside the continental US for national mapping.   
 
 ```{r}
 
 net_migration <- get_estimates(geography = "county",
                                variables = "RNETMIG",
-                               vintage = 2023,
+                               vintage = 2024,
                                geometry = TRUE,
                                resolution = "20m") %>%
   shift_geometry()
@@ -89,7 +90,7 @@ ggplot() +
   coord_sf(datum = NA) +
   theme_minimal(base_family = "Roboto", base_size = 18) +
   labs(title = "Net migration per 1000 residents by county",
-       subtitle = "US Census Bureau 2023 Population Estimates",
+       subtitle = "US Census Bureau 2024 Population Estimates",
        fill = "Rate",
        caption = "Data acquired with the R tidycensus package | @kyle_e_walker")
 ```
@@ -107,7 +108,7 @@ la_age_hisp <- get_estimates(geography = "county",
                              breakdown_labels = TRUE, 
                              state = "CA", 
                              county = "Los Angeles",
-                             vintage = 2023)
+                             vintage = 2024)
 
 la_age_hisp
 ```
@@ -129,7 +130,7 @@ ggplot(compare, aes(x = AGEGROUP, y = value, fill = SEX)) +
   coord_flip() + 
   facet_wrap(~HISP) + 
   labs(x = "", 
-       y = "2023 Census Bureau population estimate", 
+       y = "2024 Census Bureau population estimate", 
        title = "Population structure by Hispanic origin", 
        subtitle = "Los Angeles County, California", 
        fill = "", 
