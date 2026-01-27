@@ -23,7 +23,7 @@
 #' @param breakdown_labels Whether or not to label breakdown elements returned when
 #'                         \code{product = "characteristics"}. Defaults to FALSE.
 #' @param vintage It is recommended to use the most recent vintage
-#'             available for a given decennial series (so, year = 2019 for the 2010s, and year = 2023 for the 2020s).  Will default to 2022 until the full PEP for 2023 is released.
+#'             available for a given decennial series (so, year = 2019 for the 2010s, and year = 2025 for the 2020s).
 #' @param year The data year (defaults to the vintage requested). Use \code{time_series = TRUE} to access time-series estimates.
 #' @param state The state for which you are requesting data. State
 #'              names, postal codes, and FIPS codes are accepted.
