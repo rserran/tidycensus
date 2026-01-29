@@ -1101,6 +1101,11 @@ get_estimates <- function(
       year_to_keep <- as.integer(year)
       base$GEOID <- as.character(base$GEOID)
 
+      # Use `variables = 'all'`
+      if (all(variables == "all")) {
+        variables <- unique(base$variable)
+      }
+
       # Explain available variables
       if (!all(variables %in% unique(base$variable))) {
         vars <- unique(base$variable)
@@ -1112,11 +1117,6 @@ get_estimates <- function(
           ),
           50
         ))
-      }
-
-      # Use `variables = 'all'`
-      if (all(variables == "all")) {
-        variables <- unique(base$variable)
       }
 
       # Get the requested variables and handle time series if so
@@ -1559,11 +1559,11 @@ get_estimates <- function(
         )
       }
     } else {
-      # Handle here until 2023 CB files are released
-      if (year == 2023) {
+      # Handle CB file availability
+      if (year == 2025) {
         geom <- try(suppressMessages(use_tigris(
           geography = geography,
-          year = 2022,
+          year = 2024,
           state = state,
           county = county,
           ...
