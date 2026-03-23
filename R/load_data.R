@@ -735,12 +735,18 @@ load_data_estimates <- function(geography, product = NULL, variables = NULL, key
   return(dat)
 }
 
+get_pums_recode_years <- function(survey) {
+  yrs <- tidycensus::pums_variables$year[tidycensus::pums_variables$survey == survey]
+  sort(unique(as.integer(yrs)))
+}
+
+
 load_data_pums <- function(variables, state, puma, key, year, survey,
                            variables_filter, recode, show_call) {
 
   # for which years is data dictionary available in pums_variables?
   # we'll use this a couple times later on
-  recode_years <- 2017:2023
+  recode_years <- get_pums_recode_years(survey)
 
   base <- sprintf("https://api.census.gov/data/%s/acs/%s/pums",
                   year, survey)
@@ -1026,7 +1032,7 @@ load_data_pums_vacant <- function(variables, state, puma, key, year, survey,
 
   # for which years is data dictionary available in pums_variables?
   # we'll use this a couple times later on
-  recode_years <- 2017:2023
+  recode_years <- get_pums_recode_years(survey)
 
   base <- sprintf("https://api.census.gov/data/%s/acs/%s/pums",
                   year, survey)
