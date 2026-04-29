@@ -58,6 +58,25 @@ test_that("moe_sum handles na.rm", {
   expect_true(is.finite(moe_sum(moes, ests, na.rm = TRUE)))
 })
 
+test_that("moe_sum handles missing MOEs for zero estimates", {
+  moes <- c(100, NA, NA)
+  ests <- c(500, 0, 0)
+
+  expect_true(is.na(moe_sum(moes, ests, na.rm = FALSE)))
+  expect_warning(
+    result <- moe_sum(moes, ests, na.rm = TRUE),
+    NA
+  )
+  expect_equal(result, 100)
+})
+
+test_that("moe_sum handles missing estimates", {
+  moes <- c(100, 200, 150)
+  ests <- c(500, NA, 400)
+
+  expect_equal(moe_sum(moes, ests), sqrt(100^2 + 200^2 + 150^2))
+})
+
 test_that("moe_ratio returns correct values", {
   result <- moe_ratio(num = 100, denom = 500, moe_num = 20, moe_denom = 40)
   r2 <- (100 / 500)^2
