@@ -8,8 +8,21 @@ library(stringr)
 library(httr)
 library(jsonlite)
 
+require_census_api_key <- function() {
+  key <- Sys.getenv("CENSUS_API_KEY")
+
+  if (!nzchar(key)) {
+    stop("Set CENSUS_API_KEY before running this data-raw script.", call. = FALSE)
+  }
+
+  key
+}
+
 get_no_moe_vars <- function(year){
-  GET(str_c("https://api.census.gov/data/", year,"/acs/acs5/variables.json")) %>%
+  GET(
+    str_c("https://api.census.gov/data/", year, "/acs/acs5/variables.json"),
+    query = list(key = require_census_api_key())
+  ) %>%
     content(as = "text") %>%
     fromJSON() %>%
     flatten_dfr(.id = "name") %>%

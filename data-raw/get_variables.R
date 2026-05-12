@@ -4,11 +4,28 @@ library(rvest)
 library(tidyverse)
 library(stringr)
 
+require_census_api_key <- function() {
+  key <- Sys.getenv("CENSUS_API_KEY")
+
+  if (!nzchar(key)) {
+    stop("Set CENSUS_API_KEY before running this data-raw script.", call. = FALSE)
+  }
+
+  key
+}
+
+census_api_url <- function(path) {
+  paste0(
+    "https://api.census.gov/data/",
+    path,
+    "?key=",
+    URLencode(require_census_api_key(), reserved = TRUE)
+  )
+}
+
 fetch_sfvars <- function(year) {
 
-  url <- paste0("http://api.census.gov/data/",
-                as.character(year),
-                "/acs5/variables.html")
+  url <- census_api_url(paste0(as.character(year), "/acs/acs5/variables.html"))
 
   dat <- url %>%
     html() %>%
@@ -28,9 +45,7 @@ walk(2009:2015, fetch_sfvars)
 
 fetch_censusvars <- function(dataset) {
 
-  url <- paste0("http://api.census.gov/data/",
-                dataset,
-                "/variables.html")
+  url <- census_api_url(paste0(dataset, "/variables.html"))
 
   dat <- url %>%
     html() %>%
@@ -59,10 +74,10 @@ walk(sets, fetch_censusvars)
 
 
 
-j <- fromJSON("http://api.census.gov/data/2015/acs5/variables.json")
+j <- fromJSON(census_api_url("2015/acs/acs5/variables.json"))
 
 
-url <- "http://api.census.gov/data/2009/acs5/variables.html"
+url <- census_api_url("2009/acs/acs5/variables.html")
 
 f15 <- url %>%
   html() %>%
@@ -72,4 +87,4 @@ f15 <- url %>%
 b <- f15[[1]]
 
 
-x <- read_xml("http://api.census.gov/data/2015/acs5/variables.xml")
+x <- read_xml(census_api_url("2015/acs/acs5/variables.xml"))

@@ -49,7 +49,7 @@ net_migration <- get_estimates(geography = "county",
                                variables = "RNETMIG",
                                vintage = 2024,
                                geometry = TRUE,
-                               resolution = "20m") %>%
+                               resolution = "20m") |>
   shift_geometry()
 
 net_migration
@@ -65,21 +65,21 @@ showtext_auto()
 
 order = c("-15 and below", "-15 to -5", "-5 to +5", "+5 to +15", "+15 and up")
 
-net_migration <- net_migration %>%
+net_migration <- net_migration |>
   mutate(groups = case_when(
     value > 15 ~ "+15 and up",
     value > 5 ~ "+5 to +15",
     value > -5 ~ "-5 to +5",
     value > -15 ~ "-15 to -5",
     TRUE ~ "-15 and below"
-  )) %>%
+  )) |>
   mutate(groups = factor(groups, levels = order))
 
 state_overlay <- states(
   cb = TRUE,
   resolution = "20m"
-) %>%
-  filter(GEOID != "72") %>%
+) |>
+  filter(GEOID != "72") |>
   shift_geometry()
 
 ggplot() +
@@ -118,7 +118,7 @@ With some additional data wrangling, the returned format facilitates analysis an
 ```{r}
 compare <- filter(la_age_hisp, str_detect(AGEGROUP, "^Age"), 
                   HISP != "Both Hispanic Origins", 
-                  SEX != "Both sexes") %>%
+                  SEX != "Both sexes") |>
   mutate(value = ifelse(SEX == "Male", -value, value))
 
 ggplot(compare, aes(x = AGEGROUP, y = value, fill = SEX)) + 
@@ -160,8 +160,8 @@ wch_flows <- get_flows(
   year = 2018
   )
 
-wch_flows %>% 
-  filter(!is.na(GEOID2)) %>% 
+wch_flows |> 
+  filter(!is.na(GEOID2)) |> 
   head()
 ```
 
@@ -170,26 +170,26 @@ With the default setting of `get_flows()`, data is returned in a "tidy" or long 
 One simple question we can answer with this data is, to which county did the most people move from Westchester?
 
 ```{r}
-wch_flows %>% 
-  filter(variable == "MOVEDOUT") %>% 
-  arrange(desc(estimate)) %>% 
+wch_flows |> 
+  filter(variable == "MOVEDOUT") |> 
+  arrange(desc(estimate)) |> 
   head()
 ```
 
 The `MOVEDOUT` variable only estimates the number of people that moved out of Westchester County and doesn't account for the number of people that moved in to Westchester from each county.  If you are interested in net migration (moved in - moved out), you can use the `MOVEDNET` variable.
 
 ```{r}
-wch_flows %>% 
-  filter(variable == "MOVEDNET") %>% 
-  arrange(estimate) %>% 
+wch_flows |> 
+  filter(variable == "MOVEDNET") |> 
+  arrange(estimate) |> 
   head()
 ```
 
 You may have noticed that there are some destination geographies that are not other counties.  For people that moved into to Westchester from outside the United States, the Migration Flows data reports the region that they moved from, such as Africa or Asia.  Since this dataset is based on the American Community Survey, there is no way of knowing how many people moved out of the United States, so for all pairs of US to non-US places, the value of `MOVEDOUT` and `MOVEDNET` is `NA`.  The `GEOID` of non-US places is also `NA`.
 
 ```{r}
-wch_flows %>% 
-  filter(is.na(GEOID2)) %>% 
+wch_flows |> 
+  filter(is.na(GEOID2)) |> 
   head()
 ```
 
@@ -207,7 +207,7 @@ la_flows <- get_flows(
   )
 
 # net migration between la and san francisco
-la_flows %>% 
+la_flows |> 
   filter(str_detect(FULL2_NAME, "San Fran"), variable == "MOVEDNET")
 ```
 
@@ -225,7 +225,7 @@ phx_flows <- get_flows(
   geometry = TRUE
   )
 
-phx_flows %>% 
+phx_flows |> 
   head()
 ```
 
@@ -234,9 +234,9 @@ With the centroids attached to each pair of places, it is straightforward to map
 ```{r, eval=FALSE}
 library(mapdeck)
 
-top_move_in <- phx_flows %>% 
-  filter(!is.na(GEOID2), variable == "MOVEDIN") %>% 
-  slice_max(n = 25, order_by = estimate) %>% 
+top_move_in <- phx_flows |> 
+  filter(!is.na(GEOID2), variable == "MOVEDIN") |> 
+  slice_max(n = 25, order_by = estimate) |> 
   mutate(
     width = estimate / 500,
     tooltip = paste0(
@@ -246,8 +246,8 @@ top_move_in <- phx_flows %>%
       )
     )
 
-top_move_in %>% 
-  mapdeck(style = mapdeck_style("dark"), pitch = 45) %>% 
+top_move_in |> 
+  mapdeck(style = mapdeck_style("dark"), pitch = 45) |> 
   add_arc(
     origin = "centroid1",
     destination = "centroid2",
