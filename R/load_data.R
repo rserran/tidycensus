@@ -865,9 +865,9 @@ load_data_pums <- function(variables, state, puma, key, year, survey,
 
   }
 
-  call <- httr::GET(base,
-                    query = query,
-                    httr::progress())
+  call <- GET(base,
+              query = query,
+              progress())
 
   if (show_call) {
     call_url <- gsub("&key.*", "", call$url)
@@ -887,7 +887,7 @@ load_data_pums <- function(variables, state, puma, key, year, survey,
   }
 
 
-  content <- httr::content(call, as = "text")
+  content <- content(call, as = "text")
 
   if (grepl("You included a key with this request", content)) {
     stop("You have supplied an invalid or inactive API key. To obtain a valid API key, visit https://api.census.gov/data/key_signup.html. To activate your key, be sure to click the link provided to you in the email from the Census Bureau that contained your key.", call. = FALSE)
@@ -1038,7 +1038,7 @@ load_data_pums_vacant <- function(variables, state, puma, key, year, survey,
                   year, survey)
 
   # Parse the variables for housing vs. person variables
-  housing_catalog <- pums_variables %>%
+  housing_catalog <- tidycensus::pums_variables %>%
     dplyr::filter(level != "person" | is.na(level)) %>%
     dplyr::pull(var_code) %>%
     unique()
@@ -1146,9 +1146,9 @@ load_data_pums_vacant <- function(variables, state, puma, key, year, survey,
 
   }
 
-  call <- httr::GET(base,
-                    query = query,
-                    httr::progress())
+  call <- GET(base,
+              query = query,
+              progress())
 
   if (show_call) {
     call_url <- gsub("&key.*", "", call$url)
@@ -1168,7 +1168,7 @@ load_data_pums_vacant <- function(variables, state, puma, key, year, survey,
   }
 
 
-  content <- httr::content(call, as = "text")
+  content <- content(call, as = "text")
 
   if (grepl("You included a key with this request", content)) {
     stop("You have supplied an invalid or inactive API key. To obtain a valid API key, visit https://api.census.gov/data/key_signup.html. To activate your key, be sure to click the link provided to you in the email from the Census Bureau that contained your key.", call. = FALSE)
