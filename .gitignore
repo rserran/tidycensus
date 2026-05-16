@@ -9,3 +9,4 @@ tidycensus*.tar.gz
 tidycensus*.tgz
 .claude
 dev
+vignettes/cache/

@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">tidycensus</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.7.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">1.8.0</span>
       </span>
     </div>
 
@@ -75,6 +75,15 @@
       <small>Source: <a href="https://github.com/walkerke/tidycensus/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="1.8" id="tidycensus-18">tidycensus 1.8<a class="anchor" aria-label="anchor" href="#tidycensus-18"></a></h2>
+<ul><li>
+<strong>Breaking change:</strong> the Census Bureau now requires an API key for all requests, including metadata endpoints used by <code><a href="../reference/load_variables.html">load_variables()</a></code> and <code><a href="../reference/get_pop_groups.html">get_pop_groups()</a></code>. Tidycensus will now error (rather than warn) when no key is available. Pass a key with the <code>key</code> argument or store one for future sessions with <code>census_api_key("YOUR KEY", install = TRUE)</code>. <code><a href="../reference/load_variables.html">load_variables()</a></code> and <code><a href="../reference/get_pop_groups.html">get_pop_groups()</a></code> gain a <code>key</code> argument, and table lookups triggered by the <code>table =</code> argument to <code><a href="../reference/get_acs.html">get_acs()</a></code> / <code><a href="../reference/get_decennial.html">get_decennial()</a></code> now forward the resolved key automatically.</li>
+<li>
+<code><a href="../reference/get_decennial.html">get_decennial()</a></code> now normalizes state-prefixed ZCTA GEOIDs returned by selected decennial API endpoints before joining to geometry.</li>
+<li>
+<code>get_pums(return_vacant = TRUE)</code> now qualifies internal PUMS metadata lookups so the function works correctly when called with <code><a href="../reference/get_pums.html">tidycensus::get_pums()</a></code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="1.7.0" id="tidycensus-170">tidycensus 1.7.0<small>2025-01-23</small><a class="anchor" aria-label="anchor" href="#tidycensus-170"></a></h2>
 <ul><li>Defaults for <code><a href="../reference/get_acs.html">get_acs()</a></code> and <code><a href="../reference/get_pums.html">get_pums()</a></code> updated to 2023 following full release of the 2023 ACS datasets.</li>
@@ -219,7 +228,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.9000.</p>
 </div>
 
       </footer></div>

@@ -11,7 +11,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE, fig.width = 8)
 
 If requested, __tidycensus__ can return simple feature geometry for geographic units along with variables from the decennial US Census or American Community survey.  By setting `geometry = TRUE` in a __tidycensus__ function call, __tidycensus__ will use the __tigris__ package to retrieve the corresponding geographic dataset from the US Census Bureau and pre-merge it with the tabular data obtained from the Census API.   
 
-The following example shows median household income from the 2016-2020 ACS for Census tracts in Orange County, California: 
+The following example shows median household income from the 2020-2024 ACS for Census tracts in Orange County, California:
 
 ```{r}
 library(tidycensus)
@@ -24,7 +24,7 @@ orange <- get_acs(
   geography = "tract",
   variables = "B19013_001",
   geometry = TRUE,
-  year = 2020
+  year = 2024
 )
 
 head(orange)
@@ -32,10 +32,10 @@ head(orange)
 
 Our object `orange` looks much like the basic __tidycensus__ output, but with a `geometry` list-column describing the geometry of each feature, using the geographic coordinate system NAD 1983 (EPSG: 4269) which is the default for Census shapefiles.  __tidycensus__ uses the Census [cartographic boundary shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html) for faster processing; if you prefer the TIGER/Line shapefiles, set `cb = FALSE` in the function call. 
 
-As the dataset is in a tidy format, it can be quickly visualized with the `geom_sf` functionality currently in the development version of __ggplot2__: 
+As the dataset is in a tidy format, it can be quickly visualized with `geom_sf()` from __ggplot2__:
 
 ```{r}
-orange %>%
+orange |>
   ggplot(aes(fill = estimate)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma") 
@@ -72,8 +72,8 @@ We notice that there are four entries for each Census tract, with each entry rep
 With this information, we can set up an analysis pipeline in which we calculate a new percent-of-total column and visualize the result for each group in a faceted plot.  
 
 ```{r}
-harris %>%
-  mutate(percent = 100 * (value / summary_value)) %>%
+harris |>
+  mutate(percent = 100 * (value / summary_value)) |>
   ggplot(aes(fill = percent)) +
   facet_wrap(~variable) +
   geom_sf(color = NA) +
@@ -86,23 +86,23 @@ harris %>%
 
 Geometries in tidycensus default to the Census Bureau's [cartographic boundary shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html).  Cartographic boundary shapefiles are preferred to the core [TIGER/Line shapefiles](https://www.census.gov/geo/maps-data/data/tiger-line.html) in tidycensus as their smaller size speeds up processing and because they are pre-clipped to the US coastline.
 
-However, there may be circumstances in which your mapping requires more detail.  A good example of this would be maps of New York City, in which even the cartographic boundary shapefiles include water area.  For example, take this example of median household income by Census tract in Manhattan (New York County), NY: 
+However, there may be circumstances in which your mapping requires more detail.  A good example of this would be maps of New York City, in which even the cartographic boundary shapefiles include water area.  For example, take this example of median household income by Census tract in Manhattan (New York County), NY:
 
 ```{r, message = FALSE, warning = FALSE}
 library(tidycensus)
 library(tidyverse)
 options(tigris_use_cache = TRUE)
 
-ny <- get_acs(geography = "tract", 
-              variables = "B19013_001", 
-              state = "NY", 
-              county = "New York", 
-              year = 2020, 
+ny <- get_acs(geography = "tract",
+              variables = "B19013_001",
+              state = "NY",
+              county = "New York",
+              year = 2024,
               geometry = TRUE)
 
-ggplot(ny, aes(fill = estimate)) + 
-  geom_sf() + 
-  theme_void() + 
+ggplot(ny, aes(fill = estimate)) +
+  geom_sf() +
+  theme_void() +
   scale_fill_viridis_c(labels = scales::dollar)
 
 ```
@@ -119,12 +119,12 @@ ny_erase <- get_acs(
   variables = "B19013_001",
   state = "NY",
   county = "New York",
-  year = 2020,
+  year = 2024,
   geometry = TRUE,
   cb = FALSE
-) %>%
-  st_transform(26918) %>%
-  erase_water(year = 2020)
+) |>
+  st_transform(26918) |>
+  erase_water(year = 2024)
 
 ggplot(ny_erase, aes(fill = estimate)) + 
   geom_sf() + 
