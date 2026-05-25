@@ -3,6 +3,8 @@
 ^docs$
 ^vignettes$
 ^data-raw$
+^dev$
+^tmp$
 _pkgdown.yml
 ^examples$
 index.Rmd

@@ -10,3 +10,5 @@ tidycensus*.tgz
 .claude
 dev
 vignettes/cache/
+.DS_Store
+tmp/
