@@ -1,12 +1,12 @@
 Package: tidycensus
 Type: Package
 Title: Load US Census Boundary and Attribute Data as 'tidyverse' and 'sf'-Ready Data Frames
-Version: 1.8.1
+Version: 2.0.0
 Authors@R: c(
     person(given = "Kyle", family = "Walker", email="kyle@walker-data.com", role=c("aut", "cre")),
     person(given = "Matt", family = "Herman", email = "mfherman@gmail.com", role = "aut"),
     person(given = "Kris", family = "Eberwein", email = "eberwein@knights.ucf.edu", role = "ctb"))
-Date: 2026-05-25
+Date: 2026-10-16
 URL: https://walker-data.com/tidycensus/
 BugReports: https://github.com/walkerke/tidycensus/issues
 Description: An integrated R interface to several United States Census Bureau
@@ -20,16 +20,16 @@ LazyData: true
 Depends:
     R (>= 4.1)
 Imports:
-    httr,
+    httr2 (>= 1.1.0),
     sf,
     dplyr (>= 1.0.0),
-    tigris,
+    tigris (>= 2.3.0),
     stringr,
     jsonlite (>= 1.5.0),
     purrr,
     rvest,
     tidyr (>= 1.0.0),
-    readr,
+    readr (>= 2.0.0),
     xml2,
     units,
     utils,
@@ -38,10 +38,11 @@ Imports:
     tidyselect
 Suggests:
     ggplot2,
+    readxl,
     survey,
     srvyr,
     terra,
     testthat (>= 3.0.0),
     withr
 Config/testthat/edition: 3
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.1.0
